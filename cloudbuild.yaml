@@ -1,0 +1,15 @@
+steps:
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'gcloud'
+  args:
+    - 'run'
+    - 'deploy'
+    - 'node-express-service' 
+    - '--source'
+    - '.'
+    - '--region'
+    - 'us-east4'
+    - '--allow-unauthenticated'
+    - '--service-account'
+    - 'runner-sa@brh-tst.iam.gserviceaccount.com' 
+    - '--update-secrets=MONGODB_URL=MONGODB_URL:latest,JWT_SECRET=JWT_SECRET:latest'
