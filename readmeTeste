@@ -44,6 +44,10 @@ Durante a validação, encontramos uma série de desafios que foram sistematicam
     * **Solução:** As dependências foram pré-instaladas localmente (`npm install`) e a pasta `node_modules` foi enviada para o repositório, eliminando a necessidade de acesso à internet durante o build.
 
 * **Erro 2: Falha de Permissão `PERMISSION_DENIED: ... actAs` (O Erro Final)**
+ERROR: (gcloud.run.deploy) PERMISSION_DENIED: Permission 'iam.serviceaccounts.actAs' denied on service account runner-sa@brh-tst.iam.gserviceaccount.com (or it may not exist). This command is authenticated as cb-deployer-brh-tst-iam-gservi@brh-tst.iam.gserviceaccount.com which is the active account specified by the [core/account] property.
+ERROR
+ERROR: build step 0 "gcr.io/google.com/cloudsdktool/cloud-sdk" failed: step exited with non-zero status: 1
+
     * **Sintoma:** O build falhava consistentemente com um erro indicando que a conta de serviço do build (`cb-deployer`) não tinha permissão para "agir como" (`actAs`) a conta de serviço do Cloud Run (`runner-sa`).
     * **Tentativas de Solução:**
         1.  Concedemos o papel `Usuário da conta de serviço` diretamente na conta `runner-sa` para a `cb-deployer`.
