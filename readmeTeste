@@ -1,0 +1,61 @@
+# Desafio Google Cloud: CI/CD com Cloud Run e API Gateway
+
+## 1. Objetivo
+
+Implementar um pipeline de CI/CD (Integração e Entrega Contínua) completo para uma aplicação Node.js. O objetivo era automatizar o deploy a partir de um repositório no GitHub para o Cloud Run, seguindo as melhores práticas de segurança com IAM e Secret Manager, e expondo a aplicação de forma segura através do API Gateway.
+
+## 2. Arquitetura e Tecnologias Utilizadas
+
+* **Controle de Versão:** GitHub
+* **CI/CD (Automação):** Cloud Build
+* **Computação Serverless:** Cloud Run
+* **Gerenciamento de Segredos:** Secret Manager
+* **Exposição de API:** API Gateway
+* **Controle de Acesso:** Identity and Access Management (IAM)
+
+## 3. Fluxo de CI/CD Implementado
+
+O pipeline foi configurado para seguir o fluxo abaixo:
+
+`Desenvolvedor (git push)` → `GitHub` → `Gatilho do Cloud Build` → `Cloud Build constrói a imagem a partir do código` → `Deploy da nova versão no Cloud Run` → `Aplicação acessível via API Gateway`
+
+## 4. Resumo dos Passos Realizados
+
+1.  **Configuração Inicial:** O projeto `brh-tst` foi preparado com os rótulos `env=test` e `owner=isabele`.
+2.  **Segurança e IAM:**
+    * Foram criadas duas contas de serviço dedicadas: `runner-sa` (para a execução do Cloud Run) e `cb-deployer` (para o processo de deploy do Cloud Build), seguindo o princípio do menor privilégio.
+    * Segredos como a URL do banco de dados (`MONGODB_URL`) e chaves de JWT foram armazenados de forma segura no **Secret Manager**.
+3.  **Configuração do CI/CD:**
+    * O repositório do GitHub foi conectado ao Cloud Build.
+    * Um arquivo de configuração `cloudbuild.yaml` foi criado para definir os passos do deploy.
+    * Um **Gatilho (Trigger)** foi configurado para acionar o build a cada `push` na branch principal.
+4.  **Implantação do Serviço:**
+    * O serviço `node-express-service` foi criado no **Cloud Run**, referenciando os segredos do Secret Manager como variáveis de ambiente e associado à conta de serviço `runner-sa`.
+5.  **Exposição da API:**
+    * Um **API Gateway** foi configurado com uma especificação OpenAPI para criar uma fachada segura e um ponto de entrada único para a aplicação, roteando o tráfego para o Cloud Run.
+
+## 5. Diagnóstico de Erros e Soluções (Jornada de Troubleshooting)
+
+Durante a validação, encontramos uma série de desafios que foram sistematicamente resolvidos:
+
+* **Erro 1: Falha de Rede no Build (`yarn install`)**
+    * **Sintoma:** O build não conseguia baixar as dependências do projeto.
+    * **Causa:** Uma política de rede na organização Google Cloud bloqueava o acesso à internet a partir do ambiente do Cloud Build.
+    * **Solução:** As dependências foram pré-instaladas localmente (`npm install`) e a pasta `node_modules` foi enviada para o repositório, eliminando a necessidade de acesso à internet durante o build.
+
+* **Erro 2: Falha de Permissão `PERMISSION_DENIED: ... actAs` (O Erro Final)**
+    * **Sintoma:** O build falhava consistentemente com um erro indicando que a conta de serviço do build (`cb-deployer`) não tinha permissão para "agir como" (`actAs`) a conta de serviço do Cloud Run (`runner-sa`).
+    * **Tentativas de Solução:**
+        1.  Concedemos o papel `Usuário da conta de serviço` diretamente na conta `runner-sa` para a `cb-deployer`.
+        2.  Aguardamos para garantir a propagação das permissões no IAM.
+        3.  Concedemos o papel superpoderoso de `Editor` para a conta `cb-deployer` em todo o projeto.
+    * **Diagnóstico Final:** O erro persistiu mesmo após a conta `cb-deployer` já ter o papel de `Editor`. Isso prova que a configuração no nível do projeto está correta.
+
+## 6. Status Atual e Bloqueio
+
+* **Status:** O pipeline de CI/CD está totalmente configurado, mas sua execução final está **bloqueada**.
+* **Causa Raiz Provável:** Uma **Política de Organização (Deny Policy)** ou um **perímetro do VPC Service Controls** configurado em um nível superior (Organização ou Pasta) está ativamente negando a permissão `iam.serviceaccounts.actAs`, sobrepondo-se até mesmo ao papel de `Editor` concedido no projeto.
+* **Próximo Passo Necessário:** O problema não pode ser resolvido com permissões no nível do projeto. É necessário **contatar o administrador do Google Cloud da organização**, apresentar este diagnóstico e solicitar uma exceção para o projeto `brh-tst`, permitindo que a conta de serviço `cb-deployer` possa atuar como a `runner-sa`.
+
+URL publica do cloud run: https://node-express-service-931068100972.us-east4.run.app
+URL do API gateway :https://my-express-gateway-bvq5woks.uk.gateway.dev
