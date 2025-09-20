@@ -11,7 +11,7 @@ steps:
     - 'us-east4'
     - '--allow-unauthenticated'
     - '--service-account'
-    - 'runner-sa@brh-tst.iam.gserviceaccount.com'
+    - 'runner-sa-brh-tst-iam-gservice@brh-tst.iam.gserviceaccount.com'
     - '--update-secrets=MONGODB_URL=MONGODB_URL:latest,JWT_SECRET=JWT_SECRET:latest'
 
 # ADICIONE ESTA PARTE NO FINAL
