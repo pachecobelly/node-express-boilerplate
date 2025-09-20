@@ -1,6 +1,5 @@
 FROM node:alpine
 
-# ADICIONE ESTA LINHA
 ENV NODE_ENV=production
 
 RUN mkdir -p /usr/src/node-app && chown -R node:node /usr/src/node-app
